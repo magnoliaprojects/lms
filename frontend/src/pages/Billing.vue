@@ -145,7 +145,7 @@
 					</div>
 				</div>
 				<Button variant="solid" class="mt-8" @click="generatePaymentLink()">
-					{{ __('Proceed to Payment') }}
+					{{ __('Pay with Paystack') }}
 				</Button>
 			</div>
 		</div>
@@ -172,12 +172,13 @@ import { reactive, inject, onMounted, ref } from 'vue'
 import Link from '@/components/Controls/Link.vue'
 import NotPermitted from '@/components/NotPermitted.vue'
 import { createToast } from '@/utils/'
+import Paystack from '@paystack/inline-js';
 
 const user = inject('$user')
 
 onMounted(() => {
 	const script = document.createElement('script')
-	script.src = `https://checkout.razorpay.com/v1/checkout.js`
+	script.src = `https://js.paystack.co/v2/inline.js`
 	document.body.appendChild(script)
 	if (user.data?.name) {
 		access.submit()
@@ -262,8 +263,26 @@ const generatePaymentLink = () => {
 					let docname = props.name
 					handleSuccess(response, doctype, docname, data.order_id)
 				}
-				let rzp1 = new Razorpay(data)
-				rzp1.open()
+
+                let popup = new Paystack()
+                popup.checkout({
+                        key: data.key_id,
+                        email: data.prefill.email,
+                        amount: data.amount,
+                        onSuccess: (transaction) => {
+                            console.log(transaction);
+                        },
+                        onLoad: (response) => {
+                            console.log("onLoad: ", response);
+                        },
+                        onCancel: () => {
+                            console.log("onCancel");
+                        },
+                        onError: (error) => {
+                            console.log("Error: ", error.message);
+                        }
+                    })
+
 			},
 			onError(err) {
 				showError(err)
