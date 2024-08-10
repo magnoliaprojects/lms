@@ -44,8 +44,7 @@
   "mentor_request_status_update",
   "payment_settings_tab",
   "payment_section",
-  "razorpay_key",
-  "razorpay_secret",
+  "paystack_secret",
   "apply_gst",
   "column_break_cfcv",
   "default_currency",
@@ -237,16 +236,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "razorpay_key",
-   "fieldtype": "Data",
-   "label": "Razorpay Key"
-  },
-  {
-   "fieldname": "razorpay_secret",
-   "fieldtype": "Password",
-   "label": "Razorpay Secret"
-  },
-  {
    "default": "0",
    "fieldname": "apply_gst",
    "fieldtype": "Check",
@@ -355,12 +344,17 @@
    "fieldname": "unsplash_access_key",
    "fieldtype": "Data",
    "label": "Unsplash Access Key"
+  },
+  {
+   "fieldname": "paystack_secret",
+   "fieldtype": "Data",
+   "label": "Paystack Secret"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-04-16 12:18:14.670978",
+ "modified": "2024-08-10 02:13:39.416956",
  "modified_by": "Administrator",
  "module": "LMS",
  "name": "LMS Settings",

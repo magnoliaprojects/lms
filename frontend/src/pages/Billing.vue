@@ -72,6 +72,12 @@
 							</div>
 							<Input type="text" v-model="billingDetails.billing_name" />
 						</div>
+                        <div class="mt-4">
+							<div class="mb-1.5 text-sm text-gray-700">
+								{{ __('Billing Email') }}
+							</div>
+							<Input type="text" v-model="billingDetails.billing_email" />
+						</div>
 						<div class="mt-4">
 							<div class="mb-1.5 text-sm text-gray-700">
 								{{ __('Address Line 1') }}
@@ -226,6 +232,7 @@ const billingDetails = reactive({})
 
 const setBillingDetails = (data) => {
 	billingDetails.billing_name = data.billing_name || ''
+	billingDetails.billing_email = data.billing_email || ''
 	billingDetails.address_line1 = data.address_line1 || ''
 	billingDetails.address_line2 = data.address_line2 || ''
 	billingDetails.city = data.city || ''
@@ -267,7 +274,7 @@ const generatePaymentLink = () => {
                 let popup = new Paystack()
                 popup.checkout({
                         key: data.key_id,
-                        email: data.prefill.email,
+                        email: billingDetails.billing_email,
                         amount: data.amount,
                         onSuccess: (transaction) => {
                             console.log(transaction);
