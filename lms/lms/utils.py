@@ -1222,9 +1222,74 @@ def get_courses():
     courses = get_categorized_courses(courses)
     return courses
 
+@frappe.whitelist()
+def get_course_details(course):
+    # Fetch course details
+    course_details = frappe.db.get_value(
+        "LMS Course",
+        course,
+        [
+            "name",
+            "title",
+            "tags",
+            "description",
+            "image",
+            "video_link",
+            "short_introduction",
+            "published",
+            "upcoming",
+            "disable_self_learning",
+            "published_on",
+            "status",
+            "paid_course",
+            "course_price",
+            "currency",
+            "amount_usd",
+        ],
+        as_dict=1,
+    )
+
+    # Process course details
+    course_details.tags = course_details.tags.split(",") if course_details.tags else []
+    course_details.lesson_count = get_lesson_count(course_details.name)
+    course_details.enrollment_count = frappe.db.count(
+        "LMS Enrollment", {"course": course_details.name, "member_type": "Student"}
+    )
+    course_details.enrollment_count_formatted = format_number(course_details.enrollment_count)
+    
+    avg_rating = get_average_rating(course_details.name) or 0
+    course_details.avg_rating = flt(avg_rating, frappe.get_system_settings("float_precision") or 3)
+    
+    course_details.instructors = get_instructors(course_details.name)
+
+    if course_details.paid_course:
+        course_details.price = fmt_money(course_details.course_price, 0, course_details.currency)
+
+    if frappe.session.user == "Guest":
+        course_details.membership = None
+        course_details.is_instructor = False
+    else:
+        # Fetch membership details
+        course_details.membership = frappe.db.get_value(
+            "LMS Enrollment",
+            {"member": frappe.session.user, "course": course_details.name},
+            ["name", "course", "current_lesson", "progress", "member"],
+            as_dict=1,
+        )
+        
+        # Check if the user is an instructor for the course
+        course_details.is_instructor = is_instructor(course_details.name)
+
+    # If user has a membership and current lesson exists, update current lesson index
+    if course_details.membership and course_details.membership.get('current_lesson'):
+        course_details.current_lesson = get_lesson_index(course_details.membership['current_lesson'])
+
+    return course_details
+
+
 
 @frappe.whitelist(allow_guest=True)
-def get_course_details(course):
+def create_enrollment(course):
     course_details = frappe.db.get_value(
         "LMS Course",
         course,
@@ -1282,7 +1347,27 @@ def get_course_details(course):
             ["name", "course", "current_lesson", "progress", "member"],
             as_dict=1,
         )
+        # course_details.is_instructor = is_instructor(course_details.name)
+        # Check if the user is an instructor for the course
         course_details.is_instructor = is_instructor(course_details.name)
+
+        if not course_details.membership:
+            # If not enrolled, create an enrollment record
+            enrollment = frappe.get_doc({
+                "doctype": "LMS Enrollment",
+                "member": frappe.session.user,
+                "course": course_details.name,
+                "enrollment_date": frappe.utils.nowdate(),
+                "status": "Enrolled",
+            })
+            enrollment.insert()
+            frappe.db.commit()
+            print("Course Enrollment Successful")
+
+            # Assign the newly created enrollment to course_details.membership
+            course_details.membership = enrollment.as_dict()
+
+
 
     if course_details.membership and course_details.membership.current_lesson:
         course_details.current_lesson = get_lesson_index(

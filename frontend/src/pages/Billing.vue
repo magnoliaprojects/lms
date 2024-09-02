@@ -257,6 +257,15 @@ const paymentOptions = createResource({
 	},
 })
 
+const courseDetails = createResource({
+    url: 'lms.lms.utils.create_enrollment',
+    makeParams(values) {
+        return {
+            course: props.name,
+        };
+    },
+})
+
 const generatePaymentLink = () => {
 	paymentOptions.submit(
 		{},
@@ -269,7 +278,11 @@ const generatePaymentLink = () => {
 					let doctype = props.type == 'course' ? 'LMS Course' : 'LMS Batch'
 					let docname = props.name
 					handleSuccess(response, doctype, docname, data.order_id)
+                    // Redirect to a success page after handling success
+					window.location.href = "/lms/courses"; // Change this URL to your desired success page
 				}
+                console.log(data)
+                console.log(props)
 
                 let popup = new Paystack()
                 popup.checkout({
@@ -278,6 +291,18 @@ const generatePaymentLink = () => {
                         amount: data.amount,
                         onSuccess: (transaction) => {
                             console.log(transaction);
+
+                            // Fetch course details after successful payment
+                            courseDetails.fetch().then(response => {
+                                console.log("Course Details:", response);
+
+                                // Use the course details or redirect the user
+                                window.location.href = "/lms/courses";  // Redirect to the course page or another success page
+                            }).catch(error => {
+                                console.error("Error fetching course details:", error);
+                                alert("Failed to fetch course details. Please try again.");
+                            });
+                            
                         },
                         onLoad: (response) => {
                             console.log("onLoad: ", response);
